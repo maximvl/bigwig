@@ -3,7 +3,7 @@
 %%
 -module(bigwig_http_static).
 -behaviour(cowboy_http_handler).
--export([init/3, handle/2, terminate/2]).
+-export([init/3, handle/2, terminate/3]).
 
 -export([html/1, css/1, js/1]).
 
@@ -15,25 +15,27 @@ init({tcp, http}, Req, OnlyFile) ->
   {ok, Req, OnlyFile}.
 
 handle(Req, undefined_state = State) ->
-  {[_|Path], Req2} = cowboy_http_req:path(Req), % strip <<"static">>
+  %% {[_|Path], Req2} = cowboy_req:path(Req), % strip <<"static">>
+  {Path, Req2} = cowboy_req:path(Req), % strip <<"static">>
   send(Req2, Path, State);
 
 handle(Req, OnlyFile = State) ->
   send(Req, OnlyFile, State).
 
 send(Req, PathBins, State) ->
+  error_logger:info_report([{"Paths", PathBins}]),
   Path = [ binary_to_list(P) || P <- PathBins ],
   case file(filename:join(Path)) of
     {ok, Body} ->
       Headers = [{<<"Content-Type">>, <<"text/html">>}],
-      {ok, Req2} = cowboy_http_req:reply(200, Headers, Body, Req),
+      {ok, Req2} = cowboy_req:reply(200, Headers, Body, Req),
       {ok, Req2, State};
     _ ->
-      {ok, Req2} = cowboy_http_req:reply(404, [], <<"404'd">>, Req),
+      {ok, Req2} = cowboy_req:reply(404, [], <<"404'd">>, Req),
       {ok, Req2, State}
   end.
 
-terminate(_Req, _State) ->
+terminate(_Reason, _Req, _State) ->
   ok.
 
 html(Name) ->
