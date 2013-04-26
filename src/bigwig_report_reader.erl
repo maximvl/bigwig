@@ -534,8 +534,3 @@ get_opt(Key, List) ->
 	{value, {_Key, Val}} -> Val;
 	_  -> undefined
     end.
-
-
-
-
-

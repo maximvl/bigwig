@@ -9,7 +9,7 @@
 
 
 init({tcp, http}, _Req, _Opts) ->
-    {upgrade, protocol, cowboy_http_websocket}.
+    {upgrade, protocol, cowboy_websocket}.
 
 handle(_Req, _State) ->
     exit(websockets_only).

@@ -11,7 +11,8 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req, State) ->
-    {Path, Req2} = cowboy_req:path(Req),
+    {<<"/", P/binary>>, Req2} = cowboy_req:path(Req),
+		Path = binary:split(P, <<"/">>, [global]),
     handle_path(Path, Req2, State).
 
 %% /rb/reports

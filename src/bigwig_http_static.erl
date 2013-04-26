@@ -15,13 +15,13 @@ init({tcp, http}, Req, OnlyFile) ->
   {ok, Req, OnlyFile}.
 
 handle(Req, undefined_state = State) ->
-  {<<"/static/",Path/binary>>, Req2} = cowboy_req:path(Req), % strip <<"static">>
+  {Path, Req2} = cowboy_req:path_info(Req), % strip <<"static">>
   send(Req2, Path, State);
 
 handle(Req, OnlyFile = State) ->
   send(Req, OnlyFile, State).
 
-send(Req, PathBins, State) when is_list(PathBins) ->
+send(Req, PathBins, State) ->
   Path = [ binary_to_list(P) || P <- PathBins ],
   case file(filename:join(Path)) of
     {ok, Body} ->
@@ -31,10 +31,7 @@ send(Req, PathBins, State) when is_list(PathBins) ->
     _ ->
       {ok, Req2} = cowboy_req:reply(404, [], <<"404'd">>, Req),
       {ok, Req2, State}
-  end;
-
-send(Req, PathBins, State) ->
-  send(Req, [PathBins], State).
+  end.
 
 terminate(_Reason, _Req, _State) ->
   ok.

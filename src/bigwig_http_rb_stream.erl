@@ -9,7 +9,7 @@
 				 websocket_info/3]).
 
 init({tcp, http}, _Req, _Opts) ->
-  {upgrade, protocol, cowboy_http_websocket}.
+  {upgrade, protocol, cowboy_websocket}.
 
 handle(Req, State) ->
   {ok, Req2} = cowboy_req:reply(404, [], <<"Websockets only here pls">>, Req),
