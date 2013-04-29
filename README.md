@@ -117,4 +117,10 @@ URL schemes, blah
 * `/pid/global/NAME`        as above, but using global registered process name NAME
 * `/module/NAME`            NAME:module_info() stuff
 
+TODO
+====
 
+* Repair bigwig_report_reader:ascii_format_report
+* Repair (or implement?) index page system info on a left panel
+* Implement connection to other nodes
+* Maybe other features
