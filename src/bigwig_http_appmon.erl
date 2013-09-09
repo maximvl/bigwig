@@ -1,3 +1,4 @@
+
 %%
 %% web service supporting appmon
 %%
@@ -13,12 +14,11 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req0, State) ->
-    {<<"/", P/binary>>, Req} = cowboy_req:path(Req0),
-		Path = binary:split(P, <<"/">>, [global]),
-    {Method, Req1} = cowboy_req:method(Req),
-    handle_path(Method, Path, Req1, State).
+    {Path, Req1} = cowboy_req:path_info(Req0),
+    {Method, Req2} = cowboy_req:method(Req1),
+    handle_path(Method, Path, Req2, State).
 
-handle_path(<<"GET">>, [<<"appmon">>, <<"_all">>], Req, State) ->
+handle_path(<<"GET">>, [<<"_all">>], Req, State) ->
     {ok, RawApps} = bigwig_appmon_info:node_apps(),
     Info =
         [{?P2B(Pid),
@@ -29,7 +29,8 @@ handle_path(<<"GET">>, [<<"appmon">>, <<"_all">>], Req, State) ->
     Headers = [{<<"Content-Type">>, <<"application/json">>}],
     {ok, Req2} = cowboy_req:reply(200, Headers, Body, Req),
     {ok, Req2, State};
-handle_path(<<"GET">>, [<<"appmon">>, App0], Req, State) ->
+
+handle_path(<<"GET">>, [App0], Req, State) ->
     case ?B2EA(App0) of
         App when is_atom(App) ->
             {ok, Info} = bigwig_appmon_info:calc_app_tree(App),
@@ -40,6 +41,7 @@ handle_path(<<"GET">>, [<<"appmon">>, App0], Req, State) ->
         _ ->
             not_found(Req, State)
     end;
+
 handle_path(_, _, Req, State) ->
     not_found(Req, State).
 

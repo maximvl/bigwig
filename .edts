@@ -1,0 +1,5 @@
+:name "bigwig"
+:node-sname "bigwig-n"
+:lib-dirs '("deps")
+:app-include-dirs '("include")
+:project-include-dirs '()

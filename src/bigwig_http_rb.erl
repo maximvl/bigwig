@@ -11,12 +11,11 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req, State) ->
-    {<<"/", P/binary>>, Req2} = cowboy_req:path(Req),
-		Path = binary:split(P, <<"/">>, [global]),
-    handle_path(Path, Req2, State).
+    {Path, Req1} = cowboy:path_info(Req),
+    handle_path(Path, Req1, State).
 
 %% /rb/reports
-handle_path([<<"rb">>, <<"reports">>], Req0, State) ->
+handle_path([<<"reports">>], Req0, State) ->
     {ReportFilter, Req} = make_report_filter_from_qs(Req0),
     Body = jsx:term_to_json(list_reports(ReportFilter)),
     Headers = [{<<"Content-Type">>, <<"application/json">>}],
@@ -24,7 +23,7 @@ handle_path([<<"rb">>, <<"reports">>], Req0, State) ->
     {ok, Req2, State};
 
 %% /rb/reports/123
-handle_path([<<"rb">>, <<"reports">>, IdBin], Req, State) ->
+handle_path([<<"reports">>, IdBin], Req, State) ->
     Id = list_to_integer(binary_to_list(IdBin)),
     Rep = bigwig_report_reader:load_number(Id),
     Headers = [{<<"Content-Type">>, <<"application/json">>}],
@@ -45,11 +44,11 @@ report_to_json({_, {ok, Date0, Report, ReportStr}}) ->
     jsx:term_to_json([{date, Date}, {report, Report}, {report_str, ReportStr}]).
 
 
-list_reports(Filter)  -> 
+list_reports(Filter)  ->
     Reports = bigwig_report_reader:load_list(Filter),
     format_reports(Reports).
 
-format_reports(Reports) -> 
+format_reports(Reports) ->
     [{report, lists:map(fun format_report/1, Reports)}].
 
 %% NB: added a is_list guard, hpefully all reports are proplists here?
@@ -57,7 +56,7 @@ format_reports(Reports) ->
 format_report({Hash,_Type,_Pid,_Date,Rep,Str}) when is_list(Rep) ->
     [ {'_hash', list_to_binary(Hash)},
       {'_str',  Str}
-      | Rep 
+      | Rep
     ].
 
 %% Make a proplist to pass to make_filter, from the querstring

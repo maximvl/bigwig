@@ -9,22 +9,21 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req0, State) ->
-    {<<"/", P/binary>>, Req} = cowboy_req:path(Req0),
-		Path = binary:split(P, <<"/">>, [global]),
-    {Method, Req1} = cowboy_req:method(Req),
-    handle_path(Method, Path, Req1, State).
+    {Path, Req1} = cowboy_req:path_info(Req0),
+    {Method, Req2} = cowboy_req:method(Req1),
+    handle_path(Method, Path, Req2, State).
 
-handle_path(<<"POST">>, [<<"module">>, Module], Req, State) ->
+handle_path(<<"POST">>, [Module], Req, State) ->
     {Props, Req2} = cowboy_req:body_qs(Req),
     case proplists:get_value(<<"reload">>, Props) of
-        undefined -> 
+        undefined ->
             not_found(Req2, State);
-        <<"yes">> -> 
+        <<"yes">> ->
             c:l(list_to_existing_atom(binary_to_list(Module))),
             {ok, Req3} = cowboy_req:reply(200, [], <<"ok">>, Req2),
             {ok, Req3, State}
     end;
-handle_path(<<"GET">>, [<<"module">>, Module], Req, State) ->
+handle_path(<<"GET">>, [Module], Req, State) ->
     case to_module_info(Module) of
         [_|_] = Info -> json_response(Info, Req, State);
         _ -> not_found(Req, State)
@@ -49,18 +48,18 @@ to_module_info(Bin) ->
     Exports = proplists:get_value(exports, ModInfo),
     NewExports = [ list_to_binary(lists:flatten(io_lib:format("~w/~w",[F,A]))) || {F,A} <- Exports ],
     ModInfo2 = [ {exports, NewExports} | proplists:delete(exports, ModInfo) ],
-    ModInfo3 = 
+    ModInfo3 =
         case proplists:get_value(compile, ModInfo2) of
             L when is_list(L) ->
                 case proplists:get_value(time, L) of
                     T when is_tuple(T) ->
                         proplists:delete(compile, L) ++
-                        [ {compile, [ {time, [{'_type',<<"date">>},{data,tuple_to_list(T)}]}]} 
+                        [ {compile, [ {time, [{'_type',<<"date">>},{data,tuple_to_list(T)}]}]}
                                     | proplists:delete(time, L) ];
                     _ ->
                         ModInfo2
                 end;
-            _ -> 
+            _ ->
                 ModInfo2
         end,
     ModInfo3.

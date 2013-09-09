@@ -9,16 +9,15 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req0, State) ->
-    {<<"/", P/binary>>, Req} = cowboy_req:path(Req0),
-		Path = binary:split(P, <<"/">>, [global]),
-    {Method, Req1} = cowboy_req:method(Req),
-    handle_path(Method, Path, Req1, State).
+    {Path, Req1} = cowboy_req:path_info(Req0),
+    {Method, Req2} = cowboy_req:method(Req1),
+    handle_path(Method, Path, Req2, State).
 
-handle_path(<<"GET">>, [<<"top">>], Req, State) ->
+handle_path(<<"GET">>, [], Req, State) ->
     handle_get(Req, State);
-handle_path(<<"POST">>, [<<"top">>, <<"config">>, Key, Value], Req, State) ->
+handle_path(<<"POST">>, [<<"config">>, Key, Value], Req, State) ->
     handle_post_config(Key, Value, Req, State);
-handle_path(<<"POST">>, [<<"top">>, <<"node">>, Node], Req, State) ->
+handle_path(<<"POST">>, [<<"node">>, Node], Req, State) ->
     handle_post_node(fun to_node/1, Node, Req, State);
 handle_path(_, _, Req, State) ->
     not_found(Req, State).

@@ -245,14 +245,22 @@ handle_args([], C) ->
   C.
 
 loadinfo(SysI) ->
+  error_logger:info_report([{"etop_info", SysI}]),
+
   #etop_info{n_procs = Procs,
              run_queue = RQ,
              now = Now,
-             wall_clock = {_, WC},
-             runtime = {_, RT}} = SysI,
-  Cpu = try round(100*RT/WC)
-        catch _:_ -> 0
+             wall_clock = {_, WC}} = SysI,
+
+  Cpu = case SysI#etop_info.runtime of
+          undefined ->
+            0;
+          {_, RT} ->
+            try round(100*RT/WC)
+            catch _:_ -> 0
+            end
         end,
+
   Clock = io_lib:format("~2.2.0w:~2.2.0w:~2.2.0w",
                         tuple_to_list(element(2,calendar:now_to_datetime(Now)))),
   {Cpu,Procs,RQ,Clock}.
@@ -314,7 +322,7 @@ etop_proc_info_to_json(
                   runtime=Time,
                   cf=MFA,
                   mq=MQ}) ->
-  
+
   [Pid,name(Name),Time,Reds,Mem,MQ,name(MFA)].
 
 %% Connect to a node and potentially set up tracing

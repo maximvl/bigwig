@@ -9,21 +9,23 @@ init({tcp, http}, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 handle(Req0, State) ->
-    {<<"/", P/binary>>, Req} = cowboy_req:path(Req0),
-		Path = binary:split(P, <<"/">>, [global]),
-    {Method, Req1} = cowboy_req:method(Req),
-    handle_path(Method, Path, Req1, State).
+    {Path, Req1} = cowboy_req:path_info(Req0),
+    {Method, Req2} = cowboy_req:method(Req1),
+    handle_path(Method, Path, Req2, State).
 
-handle_path(<<"GET">>, [<<"pid">>, <<"global">>, Name], Req, State) ->
+handle_path(<<"GET">>, [<<"global">>, Name], Req, State) ->
     handle_get_pid(fun to_global_pid/1, Name, Req, State);
-handle_path(<<"GET">>, [<<"pid">>, Pid], Req, State) ->
+handle_path(<<"GET">>, [Pid], Req, State) ->
     handle_get_pid(fun to_pid/1, Pid, Req, State);
-handle_path(<<"POST">>, [<<"pid">>, <<"global">>, Name], Req, State) ->
+
+handle_path(<<"POST">>, [<<"global">>, Name], Req, State) ->
     handle_post_pid(fun to_global_pid/1, Name, Req, State);
-handle_path(<<"POST">>, [<<"pid">>, Pid], Req, State) ->
+handle_path(<<"POST">>, [Pid], Req, State) ->
     handle_post_pid(fun to_pid/1, Pid, Req, State);
-handle_path(<<"DELETE">>, [<<"pid">>, Pid], Req, State) ->
+
+handle_path(<<"DELETE">>, [Pid], Req, State) ->
     handle_delete_pid(fun to_pid/1, Pid, Req, State);
+
 handle_path(_, _, Req, State) ->
     not_found(Req, State).
 
